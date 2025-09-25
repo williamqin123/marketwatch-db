@@ -1,0 +1,4 @@
+# Core Libraries for Data Fetching and DB Connection
+requests
+psycopg2-binary
+python-dotenv
