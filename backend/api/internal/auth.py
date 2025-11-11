@@ -30,7 +30,7 @@ def verify_user_authentication(user_id: str, password_hash: str):
         )
         conn.commit()
 
-        is_auth_successful = cursor.fetchone()["user_exists"]
+        is_auth_successful = cursor.fetchone()[0]
 
         if is_auth_successful:
             return True
