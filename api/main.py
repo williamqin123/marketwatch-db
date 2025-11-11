@@ -2,11 +2,11 @@ from fastapi import FastAPI
 
 from fastapi import Depends, FastAPI
 
-from .dependencies import get_DB_CONNECT_CONFIG
+from .dependencies import DB_CONNECT_CONFIG
 from .internal import setup_db
 from .routers import admin_actions, user_actions, tests
 
-app = FastAPI(dependencies=[Depends(get_DB_CONNECT_CONFIG)])
+app = FastAPI(dependencies=[])
 
 app.include_router(tests.router)
 app.include_router(
