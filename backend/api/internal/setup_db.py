@@ -5,11 +5,11 @@ from ..dependencies import DB_CONNECT_CONFIG
 
 def setup_db():
     with pymysql.connect(**DB_CONNECT_CONFIG) as conn, open(
-        "../sql/ops/drop_all.sql", "r"
+        "api/sql/ops/drop_all.sql", "r"
     ) as sql_drop_all, open(
-        "../sql/schema/create_tables.sql", "r"
+        "api/sql/schema/create_tables.sql", "r"
     ) as sql_create_tables, open(
-        "../sql/triggers/create_holdings_trigger.sql", "r"
+        "api/sql/triggers/create_holdings_trigger.sql", "r"
     ) as sql_create_holdings_trigger:
         cursor = conn.cursor()
 
@@ -29,7 +29,7 @@ def setup_db():
 
 def db_fill_starter_data():
     with pymysql.connect(**DB_CONNECT_CONFIG) as conn, open(
-        "../sql/insert_sample_data.generated.sql", "r"
+        "api/sql/insert_sample_data.generated.sql", "r"
     ) as sql_insert_sample_data:
         cursor = conn.cursor()
 
