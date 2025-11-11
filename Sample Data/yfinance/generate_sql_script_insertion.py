@@ -30,15 +30,12 @@ if __name__ == "__main__":
                     # 1 table
                     df = pd.read_csv(csv_file_path)
 
-                    template_slots = ("%s," * df.shape[1])[:-1]
-
                     for index, row in df.iterrows():
                         # 1 row
                         print(
                             cursor.mogrify(
-                                f"""INSERT INTO %s ({template_slots}) VALUES ({template_slots});"""
-                                % (Path(csv_file_path).stem, *df.columns),
-                                row,
+                                f"""INSERT INTO `{Path(csv_file_path).stem}` ({','.join([f"`{col}`" for col in df.columns])}) VALUES ({','.join([f"%s" for col in df.columns])});""",
+                                tuple(row),
                             ),
                             file=sql_file,
                         )
