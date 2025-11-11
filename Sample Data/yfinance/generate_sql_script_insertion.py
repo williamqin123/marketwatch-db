@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 from dotenv import load_dotenv
 
-GENERATED_SQL_FILE_PATH = "../../koyeb/api/sql/insert_sample_data.generated.sql"
+GENERATED_SQL_FILE_PATH = "../../backend/api/sql/insert_sample_data.generated.sql"
 
 
 if __name__ == "__main__":
@@ -34,12 +34,15 @@ if __name__ == "__main__":
 
                     for index, row in df.iterrows():
                         # 1 row
-                        sql_file.write(
+                        print(
                             cursor.mogrify(
-                                f"""INSERT INTO %s ({template_slots}) VALUES ({template_slots});\n""",
+                                f"""INSERT INTO %s ({template_slots}) VALUES ({template_slots});""",
                                 [Path(csv_file_path).stem, *df.columns, *row],
-                            )
+                            ),
+                            file=sql_file,
                         )
+
+                    print("", file=sql_file)
 
                 sql_file.flush()  # Force write to disk
 

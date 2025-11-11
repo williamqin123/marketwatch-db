@@ -4,7 +4,7 @@ from ..internal import auth
 
 from fastapi import APIRouter, Header, status, HTTPException, Depends
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, Response
 
 router = APIRouter()
 
@@ -35,3 +35,5 @@ async def user_portfolios_details(
 ):
     if id == logged_in_user_id:
         return {"user_id": id}  # TODO
+
+    return Response(status_code=status.HTTP_403_FORBIDDEN)
