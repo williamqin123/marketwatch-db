@@ -352,7 +352,6 @@ def verify_tables(cursor):
         return False
 
     return True
-
 def main():
     """Main execution function"""
     print("=" * 70)
