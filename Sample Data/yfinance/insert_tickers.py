@@ -10,11 +10,13 @@ from tqdm import tqdm
 load_dotenv()
 
 DB_CONFIG = {
-    'host': os.getenv('DB_HOST', 'main-marketwatch-db.c74uqiecyemg.us-east-2.rds.amazonaws.com'),
-    'port': int(os.getenv('DB_PORT', 3306)),
-    'user': os.getenv('DB_USER', 'admin'),
-    'password': os.getenv('DB_PASSWORD'),
-    'database': os.getenv('DB_DATABASE', 'portfolio_db')
+    "host": os.getenv(
+        "DB_HOST", "main-marketwatch-db.c74uqiecyemg.us-east-2.rds.amazonaws.com"
+    ),
+    "port": int(os.getenv("DB_PORT", 3306)),
+    "user": os.getenv("DB_USER", "admin"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_DATABASE", "portfolio_db"),
 }
 
 
@@ -38,12 +40,16 @@ def get_sp500_tickers():
     sp500_table = None
     for t in tables:
         cols = [str(c).lower() for c in t.columns]
-        if any("symbol" in c for c in cols) and any("security" in c or "company" in c for c in cols):
+        if any("symbol" in c for c in cols) and any(
+            "security" in c or "company" in c for c in cols
+        ):
             sp500_table = t
             break
 
     if sp500_table is None:
-        raise ValueError(f"Could not locate the S&P 500 table. Found {len(tables)} tables total.")
+        raise ValueError(
+            f"Could not locate the S&P 500 table. Found {len(tables)} tables total."
+        )
 
     table = sp500_table
     table.columns = [str(c).strip().lower() for c in table.columns]
@@ -51,10 +57,16 @@ def get_sp500_tickers():
     print("Detected columns:", table.columns.tolist())
 
     symbol_col = next((c for c in table.columns if "symbol" in c), None)
-    name_col = next((c for c in table.columns if "security" in c or "company" in c), None)
+    name_col = next(
+        (c for c in table.columns if "security" in c or "company" in c), None
+    )
     sector_col = next((c for c in table.columns if "gics" in c and "sector" in c), None)
-    industry_col = next((c for c in table.columns if "sub" in c or "industry" in c), None)
-    hq_col = next((c for c in table.columns if "headquarters" in c or "location" in c), None)
+    industry_col = next(
+        (c for c in table.columns if "sub" in c or "industry" in c), None
+    )
+    hq_col = next(
+        (c for c in table.columns if "headquarters" in c or "location" in c), None
+    )
 
     cols = [symbol_col, name_col, sector_col, industry_col, hq_col]
     if any(c is None for c in cols):
@@ -63,7 +75,7 @@ def get_sp500_tickers():
     df = table[[symbol_col, name_col, sector_col, industry_col, hq_col]]
     df.columns = ["ticker_symbol", "company_name", "sector", "industry", "country"]
 
-    df["ticker_symbol"] = df["ticker_symbol"].str.replace('.', '-', regex=False)
+    df["ticker_symbol"] = df["ticker_symbol"].str.replace(".", "-", regex=False)
     df["country"] = df["country"].apply(
         lambda x: x.split(",")[-1].strip() if isinstance(x, str) else "United States"
     )

@@ -104,12 +104,12 @@ CREATE TABLE Alert (
     CONSTRAINT fk_alert_user
         FOREIGN KEY (user_id)
         REFERENCES User(user_id)
-        ON DELETE RESTRICT,
+        ON DELETE CASCASE,
 
     CONSTRAINT fk_alert_ticker
         FOREIGN KEY (ticker_symbol)
         REFERENCES Ticker(ticker_symbol)
-        ON DELETE RESTRICT,
+        ON DELETE CASCASE,
 
     CONSTRAINT chk_target_price_positive CHECK (target_price > 0),
 
