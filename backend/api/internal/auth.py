@@ -39,7 +39,6 @@ def verify_user_authentication(user_id: str, password_hash: str):
 
 def verify_admin_authentication(username: str, password: str):
     try:
-        print(username, password, DB_CONNECT_CONFIG["host"])
         with pymysql.connect(
             host=DB_CONNECT_CONFIG["host"],
             port=DB_CONNECT_CONFIG["port"],

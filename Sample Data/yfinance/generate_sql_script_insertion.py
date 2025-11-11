@@ -36,8 +36,9 @@ if __name__ == "__main__":
                         # 1 row
                         print(
                             cursor.mogrify(
-                                f"""INSERT INTO %s ({template_slots}) VALUES ({template_slots});""",
-                                [Path(csv_file_path).stem, *df.columns, *row],
+                                f"""INSERT INTO %s ({template_slots}) VALUES ({template_slots});"""
+                                % (Path(csv_file_path).stem, *df.columns),
+                                row,
                             ),
                             file=sql_file,
                         )
