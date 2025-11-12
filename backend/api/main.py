@@ -16,6 +16,5 @@ app.include_router(
 )
 app.include_router(
     user_actions.router,
-    prefix="/user",
     tags=["users"],
 )
