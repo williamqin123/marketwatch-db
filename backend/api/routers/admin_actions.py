@@ -12,6 +12,8 @@ from ..dependencies import DB_CONNECT_CONFIG
 
 import json, pymysql
 
+from collections import defaultdict
+
 router = APIRouter()
 
 
@@ -64,7 +66,7 @@ async def view_table(
     credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
 ):
     PRIVATE_COLUMNS_RESTRICTION_CONDITIONS = [
-        "TABLE_NAME = 'User' AND (COLUMN_NAME = 'password_hash' OR COLUMN_NAME = 'email')"
+        "c.TABLE_NAME = 'User' AND (c.COLUMN_NAME = 'password_hash' OR c.COLUMN_NAME = 'email')"
     ]
     if auth.verify_admin_authentication(credentials.username, credentials.password):
         if table_name in ADMIN_AUTHORIZED_TABLES_NAMES:
@@ -72,28 +74,41 @@ async def view_table(
                 with conn.cursor() as cursor:
                     cursor.execute(
                         f"""SELECT
-                            COLUMN_NAME,
-                            DATA_TYPE
-                        FROM
-                            INFORMATION_SCHEMA.COLUMNS
-                        WHERE
-                            TABLE_SCHEMA = %s AND TABLE_NAME = %s
-                            {'\n'.join([f'AND NOT ({cond})' for cond in PRIVATE_COLUMNS_RESTRICTION_CONDITIONS])};
+                                c.COLUMN_NAME,
+                                c.DATA_TYPE,
+                                kcu.REFERENCED_TABLE_NAME
+                            FROM
+                                INFORMATION_SCHEMA.COLUMNS AS c
+                            LEFT JOIN
+                                INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS kcu
+                            ON
+                                c.TABLE_SCHEMA = kcu.TABLE_SCHEMA
+                                AND c.TABLE_NAME = kcu.TABLE_NAME
+                                AND c.COLUMN_NAME = kcu.COLUMN_NAME
+                                AND kcu.REFERENCED_TABLE_NAME IS NOT NULL -- Only joins for foreign keys
+                            WHERE
+                                c.TABLE_SCHEMA = %s AND c.TABLE_NAME = %s
+                                {'\n'.join([f'AND NOT ({cond})' for cond in PRIVATE_COLUMNS_RESTRICTION_CONDITIONS])};
                         """,
                         (
                             DB_CONNECT_CONFIG["database"],
                             table_name,
                         ),
                     )
-                    columns_infos = []
+                    columns_infos = defaultdict(list)
                     reflection_result = cursor.fetchall()
                     for unlabeled_column_info in reflection_result:
-                        columns_infos.append(
-                            {
-                                "name": unlabeled_column_info[0],
-                                "data_type": unlabeled_column_info[1],
-                            }
-                        )
+                        columns_infos[
+                            (unlabeled_column_info[0], unlabeled_column_info[1])
+                        ].append(unlabeled_column_info[2])
+                    columns_infos = [
+                        {
+                            "name": col_name,
+                            "data_type": col_dtype,
+                            "refs": col_refs,
+                        }
+                        for (col_name, col_dtype), col_refs in columns_infos.items()
+                    ]
 
                     sql = f"SELECT {','.join(f'`{col['name']}`' for col in columns_infos)} FROM {table_name};"
                     cursor.execute(sql)
