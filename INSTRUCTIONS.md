@@ -37,7 +37,7 @@ cd ..
 ```
 
 ### 4. Configure Database Connection
-1. Copy `.env.example` to `.env`
+1. Copy `.env.example` to `.env` and copy .env into /backend
 2. Add your database credentials:
    ```
    DB_HOST=your-aws-endpoint
@@ -49,7 +49,7 @@ cd ..
 
 ## Running the Application
 
-### Backend API (FastAPI)
+### Backend API
 
 ```bash
 # From project root

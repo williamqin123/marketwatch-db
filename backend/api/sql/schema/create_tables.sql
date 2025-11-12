@@ -64,7 +64,7 @@ CREATE TABLE Portfolio (
     INDEX idx_user_id (user_id)
 );
 
---- Create Holdings Table
+-- Create Holdings Table
 CREATE TABLE Holdings (
     holding_id INT AUTO_INCREMENT PRIMARY KEY,
     portfolio_id INT NOT NULL,
@@ -104,12 +104,12 @@ CREATE TABLE Alert (
     CONSTRAINT fk_alert_user
         FOREIGN KEY (user_id)
         REFERENCES User(user_id)
-        ON DELETE CASCASE,
+        ON DELETE CASCADE,
 
     CONSTRAINT fk_alert_ticker
         FOREIGN KEY (ticker_symbol)
         REFERENCES Ticker(ticker_symbol)
-        ON DELETE CASCASE,
+        ON DELETE CASCADE,
 
     CONSTRAINT chk_target_price_positive CHECK (target_price > 0),
 

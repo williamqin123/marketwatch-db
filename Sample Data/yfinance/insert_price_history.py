@@ -88,34 +88,77 @@ def insert_price_history(df):
     # Replace NaNs with None for MySQL
     df = df.replace({pd.NA: None, float("nan"): None})
 
-    conn = get_connection()
-    cursor = conn.cursor()
-    sql = """
-          INSERT INTO PriceHistory (ticker_symbol, date, open_price, high_price, low_price, close_price, volume)
-          VALUES (%s, %s, %s, %s, %s, %s, %s)
-              ON DUPLICATE KEY UPDATE
-                                   open_price = VALUES(open_price),
-                                   high_price = VALUES(high_price),
-                                   low_price = VALUES(low_price),
-                                   close_price = VALUES(close_price),
-                                   volume = VALUES(volume); \
-          """
+    max_retries = 3
+    retry_count = 0
+
+    while retry_count < max_retries:
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            sql = """
+                  INSERT INTO PriceHistory (ticker_symbol, date, open_price, high_price, low_price, close_price, volume)
+                  VALUES (%s, %s, %s, %s, %s, %s, %s)
+                      ON DUPLICATE KEY UPDATE
+                                           open_price = VALUES(open_price),
+                                           high_price = VALUES(high_price),
+                                           low_price = VALUES(low_price),
+                                           close_price = VALUES(close_price),
+                                           volume = VALUES(volume); \
+                  """
+            cursor.executemany(sql, df.values.tolist())
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return  # Success, exit the function
+        except Exception as e:
+            retry_count += 1
+            error_msg = str(e)
+            if "gone away" in error_msg or "BrokenPipe" in error_msg:
+                print(f"Connection lost for {df['ticker_symbol'].iloc[0]}, retrying ({retry_count}/{max_retries})...")
+                time.sleep(2)  # Wait before retry
+                try:
+                    cursor.close()
+                    conn.close()
+                except:
+                    pass
+            else:
+                print(f"Insert error for {df['ticker_symbol'].iloc[0]}: {e}")
+                try:
+                    conn.rollback()
+                    cursor.close()
+                    conn.close()
+                except:
+                    pass
+                return  # Exit on non-connection errors
+
+
+def check_ticker_has_data(ticker):
+    """Check if ticker already has price history data"""
     try:
-        cursor.executemany(sql, df.values.tolist())
-        conn.commit()
-    except Exception as e:
-        print(f"Insert error for {df['ticker_symbol'].iloc[0]}: {e}")
-        conn.rollback()
-    finally:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM PriceHistory WHERE ticker_symbol = %s", (ticker,))
+        count = cursor.fetchone()[0]
         cursor.close()
         conn.close()
-
+        return count > 0
+    except:
+        return False
 
 if __name__ == "__main__":
     tickers = get_tickers()
     print(f"Fetching hourly data for {len(tickers)} tickers (1 year)\n")
 
-    for ticker in tqdm(tickers):
+    # Check which tickers already have data
+    tickers_to_fetch = []
+    for ticker in tickers:
+        if not check_ticker_has_data(ticker):
+            tickers_to_fetch.append(ticker)
+
+    if len(tickers_to_fetch) < len(tickers):
+        print(f"Resuming: {len(tickers_to_fetch)} tickers remaining (skipping {len(tickers) - len(tickers_to_fetch)} already loaded)\n")
+
+    for ticker in tqdm(tickers_to_fetch):
         df = fetch_hourly_data(ticker)
         if not df.empty:
             insert_price_history(df)

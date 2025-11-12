@@ -29,4 +29,4 @@ BEGIN
         v_user_id,
         CURRENT_TIMESTAMP
     );
-END
+END;
