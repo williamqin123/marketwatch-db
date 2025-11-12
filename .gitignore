@@ -163,7 +163,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
+SUBMISSION_CHECKLIST.md
 .env
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#macOS,Python,dotenv
