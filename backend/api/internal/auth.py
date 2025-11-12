@@ -9,10 +9,26 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 security = HTTPBasic()
 
+# default responses when fail authenticate as user
 UNAUTHORIZED_RESPONSE = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
     detail="Incorrect username or password",
     headers={"WWW-Authenticate": "Basic"},
+)
+FORBIDDEN_RESPONSE = HTTPException(
+    status_code=status.HTTP_403_FORBIDDEN,
+    detail="You do not have permission to do this.",
+)
+
+# default responses when fail authenticate as admin
+ADMIN_UNAUTHORIZED_RESPONSE = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="You need to sign in as an admin to do this.",
+    headers={"WWW-Authenticate": "Basic"},
+)
+ADMIN_FORBIDDEN_RESPONSE = HTTPException(
+    status_code=status.HTTP_403_FORBIDDEN,
+    detail="You are not an admin user, or the admin username and password you provided are incorrect credentials.",
 )
 
 
@@ -50,3 +66,11 @@ def verify_admin_authentication(username: str, password: str):
     except:
         pass
     return False
+
+
+def basic_admin_auth_wrapper(credentials, callback):
+    if credentials.username and credentials.password:
+        if verify_admin_authentication(credentials.username, credentials.password):
+            return callback()
+        return ADMIN_FORBIDDEN_RESPONSE
+    return ADMIN_UNAUTHORIZED_RESPONSE

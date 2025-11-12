@@ -74,7 +74,6 @@ if __name__ == "__main__":
                     rows = cursor.fetchmany(size=BATCH_SIZE)
                     if not rows:  # Breaks the loop if no more rows are returned
                         break
-                    n_rows_processed_current_table += len(rows)
 
                     # hard limit
                     if n_rows_processed_current_table > ROWS_LIMIT:

@@ -10,7 +10,7 @@ from ..internal.setup_db import setup_db, db_fill_starter_data
 from ..internal import auth
 from ..dependencies import DB_CONNECT_CONFIG
 
-import json, pymysql, datetime, decimal
+import json, pymysql, datetime, decimal, io
 
 from collections import defaultdict
 
@@ -21,22 +21,22 @@ router = APIRouter()
 async def sitewide_setup(
     credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
 ):
-    if auth.verify_admin_authentication(credentials.username, credentials.password):
+    def _task():
         setup_db()
         return Response(status_code=status.HTTP_200_OK)
 
-    raise auth.UNAUTHORIZED_RESPONSE
+    return auth.basic_admin_auth_wrapper(credentials, _task)
 
 
 @router.put("/fill", tags=["admin"])
 async def insert_static_data_into_db(
     credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
 ):
-    if auth.verify_admin_authentication(credentials.username, credentials.password):
+    def _task():
         db_fill_starter_data()
         return Response(status_code=status.HTTP_200_OK)
 
-    raise auth.UNAUTHORIZED_RESPONSE
+    return auth.basic_admin_auth_wrapper(credentials, _task)
 
 
 ADMIN_AUTHORIZED_TABLES_NAMES = [
@@ -54,10 +54,12 @@ ADMIN_AUTHORIZED_TABLES_NAMES = [
 async def list_tables(
     credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
 ):
-    if auth.verify_admin_authentication(credentials.username, credentials.password):
+    def _task():
         return Response(
             json.dumps(ADMIN_AUTHORIZED_TABLES_NAMES), media_type="application/json"
         )
+
+    return auth.basic_admin_auth_wrapper(credentials, _task)
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -73,14 +75,17 @@ class CustomEncoder(json.JSONEncoder):
 
 @router.get("/table/{table_name}", tags=["admin"])
 async def view_table(
-    table_name: str,
     credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
+    table_name: str,
+    page_index: int = 0,
+    page_size: int = 10,
 ):
-    PRIVATE_COLUMNS_RESTRICTION_CONDITIONS = [
-        "c.TABLE_NAME = 'User' AND (c.COLUMN_NAME = 'password_hash' OR c.COLUMN_NAME = 'email')"
-    ]
-    if auth.verify_admin_authentication(credentials.username, credentials.password):
-        if table_name in ADMIN_AUTHORIZED_TABLES_NAMES:
+    def _task():
+        MAX_PAGE_SIZE = 100
+        PRIVATE_COLUMNS_RESTRICTION_CONDITIONS = [
+            "c.TABLE_NAME = 'User' AND (c.COLUMN_NAME = 'password_hash' OR c.COLUMN_NAME = 'email')"
+        ]
+        if table_name in ADMIN_AUTHORIZED_TABLES_NAMES and page_size < MAX_PAGE_SIZE:
             with pymysql.connect(**DB_CONNECT_CONFIG) as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(
@@ -125,16 +130,77 @@ async def view_table(
                         for (col_name, col_dtype), col_refs in columns_infos.items()
                     ]
 
-                    sql = f"SELECT {','.join(f'`{col['name']}`' for col in columns_infos)} FROM {table_name};"
-                    cursor.execute(sql)
+                    sql = f"""SELECT {','.join(f'`{col['name']}`' for col in columns_infos)} FROM {table_name}
+                        LIMIT %d OFFSET %d;"""
+                    cursor.execute(sql, (page_size, page_size * page_index))
                     results = (
                         cursor.fetchall()
                     )  # Fetches all results as a list of tuples
-                return Response(
-                    json.dumps(
-                        {"columns": columns_infos, "rows": results}, cls=CustomEncoder
-                    ),
-                    media_type="application/json",
+
+            return Response(
+                json.dumps(
+                    {"columns": columns_infos, "rows": results}, cls=CustomEncoder
+                ),
+                media_type="application/json",
+            )
+        return (
+            auth.FORBIDDEN_RESPONSE
+        )  # should be FORBIDDEN_RESPONSE not ADMIN_FORBIDDEN_RESPONSE
+
+    return auth.basic_admin_auth_wrapper(credentials, _task)
+
+
+@router.get("/metrics/storage", tags=["admin"])
+async def check_db_size(
+    credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
+):
+    def _task():
+        response_text = io.StringIO()
+        with pymysql.connect(**DB_CONNECT_CONFIG) as conn:
+            with conn.cursor() as cursor:
+                with open(
+                    "api/sql/check_tables_sizes.sql", "r"
+                ) as f_sql_check_tables_sizes:
+                    # Gets size of each table
+                    cursor.execute(
+                        f_sql_check_tables_sizes.read(),
+                        (DB_CONNECT_CONFIG["database"],),
+                    )
+
+                print("=" * 60, file=response_text)
+                print("DATABASE STORAGE BREAKDOWN", file=response_text)
+                print("=" * 60, file=response_text)
+                print(
+                    f"{'Table':<20} {'Size (MB)':<12} {'Rows':<12}", file=response_text
+                )
+                print("-" * 60, file=response_text)
+
+                total_size = 0
+                for table, size, rows in cursor.fetchall():
+                    total_size += size
+                    print(
+                        f"{table:<20} {size:>10.2f} MB {rows:>10}", file=response_text
+                    )
+
+                #
+
+                print("-" * 60, file=response_text)
+                print(f"{'TOTAL':<20} {total_size:>10.2f} MB", file=response_text)
+                print("=" * 60, file=response_text)
+
+                with open("api/sql/check_db_size.sql", "r") as f_sql_check_db_size:
+                    # Get total database size
+                    cursor.execute(
+                        f_sql_check_db_size.read(),
+                        (DB_CONNECT_CONFIG["database"],),
+                    )
+
+                db_size = cursor.fetchone()[0]
+                print(
+                    f"\nTotal Database Size: {db_size:.2f} MB ({db_size/1024:.3f} GB)",
+                    file=response_text,
                 )
 
-    raise auth.UNAUTHORIZED_RESPONSE
+        return response_text.getvalue()
+
+    return auth.basic_admin_auth_wrapper(credentials, _task)

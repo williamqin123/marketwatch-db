@@ -25,7 +25,7 @@ async def user_me_shortcut(
     if user_id:
         return RedirectResponse(url=f"/{user_id}", status_code=status.HTTP_302_FOUND)
 
-    raise auth.UNAUTHORIZED_RESPONSE
+    return auth.UNAUTHORIZED_RESPONSE
 
 
 @router.get("/users/{id}/portfolios", tags=["users"])
@@ -33,7 +33,10 @@ async def user_portfolios_details(
     id: int,
     logged_in_user_id: Annotated[str, Depends(get_logged_in_user_id)],
 ):
-    if id == logged_in_user_id:
-        return {"user_id": id}  # TODO
+    if logged_in_user_id:
+        if id == logged_in_user_id:
+            return {"user_id": id}  # TODO
 
-    return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return auth.FORBIDDEN_RESPONSE
+
+    return auth.UNAUTHORIZED_RESPONSE
