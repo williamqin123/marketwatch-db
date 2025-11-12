@@ -37,20 +37,30 @@ async def insert_static_data_into_db(
     raise auth.UNAUTHORIZED_RESPONSE
 
 
+ADMIN_AUTHORIZED_TABLES_NAMES = [
+    "Alert",
+    "User",
+    "Ticker",
+    "Portfolio",
+    "PriceHistory",
+    "Holdings",
+    "AuditLog",
+]  # do not remove! this prevents SQL injection attacks
+
+
+@router.get("/tables", tags=["admin"])
+async def list_tables(
+    credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
+):
+    if auth.verify_admin_authentication(credentials.username, credentials.password):
+        return json.dumps(ADMIN_AUTHORIZED_TABLES_NAMES, indent=4)
+
+
 @router.get("/table/{table_name}", tags=["admin"])
 async def view_table(
     table_name: str,
     credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
 ):
-    ADMIN_AUTHORIZED_TABLES_NAMES = [
-        "Alert",
-        "User",
-        "Ticker",
-        "Portfolio",
-        "PriceHistory",
-        "holdings",
-        "AuditLog",
-    ]  # do not remove! this prevents SQL injection attacks
     if auth.verify_admin_authentication(credentials.username, credentials.password):
         if table_name in ADMIN_AUTHORIZED_TABLES_NAMES:
             with pymysql.connect(**DB_CONNECT_CONFIG) as conn:
