@@ -1,35 +1,20 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route } from 'react-router-dom';
+import CreateAccount from './pages/CreateAccount';
+import MyAccount from './pages/MyAccount';
+import PriceHistory from './pages/PriceHistory';
+import Tickers from './pages/Tickers';
+import AdminDashboard from './pages/admin/Dashboard';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Routes>
+      <Route path="/register" element={<CreateAccount />} />
+      <Route path="/me" element={<MyAccount />} />
+      <Route path="/pricehistory/:tickerSymbol" element={<PriceHistory />} />
+      <Route path="/tickers" element={<Tickers />} />
+      <Route path="/admin" element={<AdminDashboard />} />
+    </Routes>
+  );
 }
 
-export default App
+export default App;
