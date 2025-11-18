@@ -4,7 +4,10 @@ from ..dependencies import DB_CONNECT_CONFIG
 
 import pymysql
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from hashlib import sha256
+import base64
+
+from fastapi import HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 security = HTTPBasic()
@@ -32,9 +35,19 @@ ADMIN_FORBIDDEN_RESPONSE = HTTPException(
 )
 
 
+def credentials_b64(username_no_colon, password_hash):
+    return base64.b64encode(
+        (username_no_colon + ":" + password_hash).encode("utf-8")
+    ).decode("utf-8")
+
+
+def hash_password(password: str):
+    return base64.b64encode(sha256(password.encode("utf-8")).digest()).decode("utf-8")
+
+
 def verify_user_authentication(user_id: str, password_hash: str):
     with pymysql.connect(**DB_CONNECT_CONFIG) as conn, open(
-        "api/sql/ops/authenticate_user.sql", "r"
+        "api/sql/crud_ops/read/authenticate_user.sql", "r"
     ) as query:
         cursor = conn.cursor()
         cursor.execute(
@@ -72,5 +85,12 @@ def basic_admin_auth_wrapper(credentials, callback):
     if credentials.username and credentials.password:
         if verify_admin_authentication(credentials.username, credentials.password):
             return callback()
-        return ADMIN_FORBIDDEN_RESPONSE
-    return ADMIN_UNAUTHORIZED_RESPONSE
+        raise ADMIN_FORBIDDEN_RESPONSE
+    raise ADMIN_UNAUTHORIZED_RESPONSE
+
+
+def user_state_json_dict(id: int, credentials_encoded: str):
+    return {
+        "id": id,
+        "credentials": credentials_encoded,
+    }
