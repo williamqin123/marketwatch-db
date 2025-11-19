@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from fastapi_pagination import Page, Params
 
 from fastapi import APIRouter, Header, status, HTTPException, Depends
@@ -215,8 +215,8 @@ async def check_db_size(
 
 @router.post("/signin", tags=["admin"])
 async def signin(
-    username: str,
-    password: str,
+    username: str = Body(...),
+    password: str = Body(...),
     logger: logging.Logger = Depends(get_logger),
 ):
     if auth.verify_admin_authentication(username, password):

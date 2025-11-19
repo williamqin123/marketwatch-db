@@ -4,7 +4,7 @@ from ..internal import auth
 from ..internal.demo_assignment import sql_code_return_wrapper
 from ..dependencies import DB_CONNECT_CONFIG, BAD_REQUEST_RESPONSE, DatabaseError
 
-from fastapi import APIRouter, Header, status, HTTPException, Depends
+from fastapi import APIRouter, Header, status, HTTPException, Depends, Body
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.responses import RedirectResponse, Response
 
@@ -35,10 +35,10 @@ def is_valid_email_addr(email: str):
 
 @router.post("/register", tags=["users"])
 async def register_new_user(
-    first_name: str,
-    last_name: str,
-    email: str,
-    password: str,
+    first_name: str = Body(...),
+    last_name: str = Body(...),
+    email: str = Body(...),
+    password: str = Body(...),
 ):
     CONSTRAINTS = [
         len(first_name) > 0 and len(first_name) <= 100,
