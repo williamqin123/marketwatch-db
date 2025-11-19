@@ -18,7 +18,7 @@ const SignOutConfirm: React.FC<SignOutConfirmProps> = ({ onAction }) => {
     <div className="min-w-[400px]">
       <h2 className="mb-5 font-bold">Sign Out</h2>
 
-      <p>Are you sure you want to sign out?</p>
+      <p className="mb-5">Are you sure you want to sign out?</p>
 
       <Button
         type="button"

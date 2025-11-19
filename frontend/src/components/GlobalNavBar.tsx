@@ -57,7 +57,8 @@ export default function GlobalNavBar() {
       {/* Signed-in identity display */}
       {user && (
         <div
-          className="float-right rounded grid grid-rows-2 cursor-pointer bg-yellow-50"
+          className="float-right rounded grid grid-rows-2 cursor-pointer bg-purple-100 px-4 py-1"
+          style={{ lineHeight: 1, fontSize: "87.5%" }}
           onClick={askUserSignOut}
         >
           <span>Signed in as:</span>
