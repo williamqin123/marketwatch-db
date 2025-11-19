@@ -46,6 +46,7 @@ async def register_new_user(
     password: str = Body(...),
     logger: logging.Logger = Depends(get_logger),
 ):
+    logger.info("start function register_new_user")
     password_hash = auth.hash_password(password)
     CONSTRAINTS = [
         len(first_name) > 0 and len(first_name) <= 100,
