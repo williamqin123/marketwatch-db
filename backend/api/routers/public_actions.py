@@ -1,4 +1,13 @@
-from fastapi import APIRouter, Depends, Header, status, HTTPException, Depends, Body
+from fastapi import (
+    APIRouter,
+    Depends,
+    Header,
+    status,
+    HTTPException,
+    Depends,
+    Body,
+    Query,
+)
 from fastapi_pagination import Page, Params
 import pymysql
 
@@ -9,7 +18,8 @@ router = APIRouter()
 
 @router.get("/tickers", tags=["public"])
 async def tickers_overview(
-    search_query: str | None, pagination_params: Params = Depends(pagination_augment)
+    search_query: str | None = Query(None),
+    pagination_params: Params = Depends(pagination_augment),
 ):
     if search_query is None:
         search_query = ""

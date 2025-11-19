@@ -42,6 +42,11 @@ function Tickers() {
         }, false);
     }
 
+    // This effect runs whenever 'searchQuery' changes
+    useEffect(() => {
+        queryTickers();
+    }, [searchBarValue])
+
     useEffect(() => {
         queryTickers();
     }, []); // The empty dependency array ensures this effect runs only once on mount
@@ -49,7 +54,7 @@ function Tickers() {
     function onSearchBarChange(event: React.ChangeEvent<HTMLInputElement>) {
         setSearchBarValue((event.target as HTMLInputElement)?.value);
 
-        queryTickers();
+        // queryTickers();
     }
 
   return (
