@@ -4,21 +4,21 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.css'
 import App from './App.tsx'
 
-import { UserProvider } from './context/UserContext';
-import { SnackbarsProvider } from './context/SnackbarsContext.tsx';
-import { GlobalModalDialogProvider } from './context/GlobalModalDialogContext.tsx';
+import { UserProvider } from './context/ActiveUserContext.tsx';
+import { ActionFeedbackToastsProvider } from './context/ActionFeedbackToastsContext.tsx';
+import { GlobalModalDialogsStatesProvider } from './context/GlobalModalDialogsStatesContext.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
 
-      <SnackbarsProvider>
+      <ActionFeedbackToastsProvider>
       <UserProvider>
-      <GlobalModalDialogProvider>
+      <GlobalModalDialogsStatesProvider>
         <App />
-      </GlobalModalDialogProvider>
+      </GlobalModalDialogsStatesProvider>
       </UserProvider>
-      </SnackbarsProvider>
+      </ActionFeedbackToastsProvider>
 
     </BrowserRouter>
   </StrictMode>,

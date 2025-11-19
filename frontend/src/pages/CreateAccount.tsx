@@ -11,10 +11,11 @@ import {
 } from "../components/ui/form";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { API_ORIGIN } from "@/App";
+import { apiCall } from "@/App";
 
 import { useNavigate } from 'react-router-dom';
-import { UserContext, UserIdentifier } from "@/context/UserContext";
+import { UserContext, FrontendUser } from "@/context/ActiveUserContext";
+import { ActionFeedbackToastsContext } from "@/context/ActionFeedbackToastsContext";
 
 interface CreateAccountFormValues {
   firstName: string;
@@ -26,7 +27,8 @@ interface CreateAccountFormValues {
 
 const CreateAccount: React.FC = () => {
   const navigate = useNavigate();
-  const currentUser = useContext(UserContext);
+  const activeUserContext = useContext(UserContext);
+  const actionFeedbackToastsContext = useContext(ActionFeedbackToastsContext);
 
   const form = useForm<CreateAccountFormValues>({
     defaultValues: {
@@ -49,41 +51,23 @@ const CreateAccount: React.FC = () => {
       return;
     }
 
-    try {
-      const payload = {
+    apiCall(activeUserContext, actionFeedbackToastsContext, {
+      endpoint: 'register',
+      method: 'POST',
+      params: {
         'first_name': values.firstName,
         'last_name': values.lastName,
         'email': values.email,
         'password': values.password,
-      };
-
-      const res = await fetch(API_ORIGIN + "/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.error("Registration failed:", errorData);
-        return;
-      }
-
-      const {id, credentials} = await res.json();
-
-      currentUser.setUser(new UserIdentifier(id, credentials));
-
-      console.log("Registration successful: ", id);
-      alert("Account created successfully!");
+      },
+    }, (credentials) => {
+      activeUserContext.setUser(new FrontendUser(credentials, activeUserContext, actionFeedbackToastsContext));
       form.reset();
-
       navigate('/me');
-
-    } catch (error) {
-      console.error("Network error:", error);
-    }
+    }, true, {
+      successFeedbackMessage: "Account created.",
+      failureFeedbackMessage: "Failed to create account.",
+    });
   };
 
   return (

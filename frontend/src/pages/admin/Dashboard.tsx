@@ -1,34 +1,28 @@
 import AdminSignIn from "@/components/AdminSignIn";
-import { UserContext, UserIdentifier } from "@/context/UserContext";
+import { UserContext, FrontendUser } from "@/context/ActiveUserContext";
 import { useContext } from "react";
-import { API_ORIGIN } from "@/App";
+import { apiCall } from "@/App";
 
 function AdminDashboard() {
-  const currentUser = useContext(UserContext);
+  const activeUserContext = useContext(UserContext);
 
   async function login(username: string, password: string) {
-    try {
-        const response = await fetch(API_ORIGIN + '/admin/signin', {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+    apiCall({
+      endpoint: 'admin/signin',
+      method: 'POST',
+      params: {
             username,
             password,
-          }),
-        });
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const {id, credentials} = await response.json();
-        currentUser?.setUser(new UserIdentifier(id, credentials));
-    } catch (error) {
-        console.error('Error logging in:', error);
-    }
+          },
+    }, (credentials) => {
+        activeUserContext?.setUser(new FrontendUser(credentials));
+    }, true, {
+      successFeedbackMessage: "Authenticated as admin.",
+      failureFeedbackMessage: "Failed to sign in as admin.",
+    });
   }
 
-  if (!currentUser.user) {
+  if (!activeUserContext.user) {
     return (
       <div className="max-w-md mx-auto mt-10 p-6">
         <AdminSignIn onLogin={login}></AdminSignIn>

@@ -10,9 +10,11 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { Input } from "../components/ui/input";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { UserContext } from '@/context/ActiveUserContext';
+import { ActionFeedbackToastsContext } from '@/context/ActionFeedbackToastsContext';
 
-import { API_ORIGIN } from '../App';
+import { apiCall } from '../App';
 
 interface Ticker {
     tickerSymbol: string;
@@ -25,22 +27,19 @@ function Tickers() {
     const [currentTickers, setCurrentTickers] = useState<Ticker[]>([]);
     const [searchBarValue, setSearchBarValue] = useState<string>('');
 
+    const activeUserContext = useContext(UserContext);
+    const actionFeedbackToastsContext = useContext(ActionFeedbackToastsContext);
+
     async function queryTickers() {
-        const params = new URLSearchParams({
-            'search_query': searchBarValue
-        });
-        const url = `${API_ORIGIN}/tickers${searchBarValue && searchBarValue.length ? ('?' + params.toString()) : ''}`;
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-            throw new Error('Network response was not ok');
+        apiCall(activeUserContext, actionFeedbackToastsContext, {
+            endpoint: 'tickers',
+            method: 'GET',
+            params: {
+                ...(searchBarValue.length > 0 && {'search_query': searchBarValue})
             }
-            const data = await response.json();
-            setCurrentTickers(data); // updates state
-            
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
+        }, (data) => {
+            setCurrentTickers(data);
+        }, false);
     }
 
     useEffect(() => {
