@@ -87,7 +87,7 @@ const CreateAccount: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-card rounded-lg shadow-md">
+    <div className="max-w-md mx-auto mt-10 p-6">
       <h2 className="text-2xl font-bold mb-6 text-center">Create Account</h2>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
