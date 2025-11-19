@@ -70,7 +70,12 @@ async def register_new_user(
 
                 conn.commit()
 
-        return auth.credentials_b64(str(created_user_id), password_hash)
+        return auth.user_state_json_dict(
+            id=created_user_id,
+            credentials_encoded=auth.credentials_b64(
+                str(created_user_id), password_hash
+            ),
+        )
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
