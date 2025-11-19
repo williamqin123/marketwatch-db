@@ -40,15 +40,16 @@ async def register_new_user(
     email: str = Body(...),
     password: str = Body(...),
 ):
+    password_hash = auth.hash_password(password)
     CONSTRAINTS = [
         len(first_name) > 0 and len(first_name) <= 100,
         len(last_name) > 0 and len(last_name) <= 100,
         len(email) > 0 and len(email) <= 255 and is_valid_email_addr(email),
-        len(password) > 0 and len(password) <= 60,
+        len(password_hash) > 0 and len(password_hash) <= 60,
     ]
     if not all(CONSTRAINTS):
         return BAD_REQUEST_RESPONSE
-    password_hash = auth.hash_password(password)
+
     try:
         with pymysql.connect(**DB_CONNECT_CONFIG) as conn:
             with conn.cursor() as cursor:
