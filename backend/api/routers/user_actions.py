@@ -9,11 +9,13 @@ from ..dependencies import (
     get_logger,
 )
 
-from fastapi import APIRouter, Header, status, HTTPException, Depends, Body
+from fastapi import APIRouter, Header, status, HTTPException, Depends, Body, Query
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.responses import RedirectResponse, Response
 
 import pymysql, re, logging
+
+from admin_actions import GENERIC_ADMIN_USER_ID
 
 router = APIRouter()
 
@@ -22,6 +24,10 @@ def get_logged_in_user_id(
     credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
 ) -> str | None:
     if not auth.verify_user_authentication(credentials.username, credentials.password):
+        # TODO: FIX THIS INEFFICIENCY
+        if not auth.verify_admin_authentication(credentials.username, credentials.password):
+            return None
+        return str(GENERIC_ADMIN_USER_ID) # admin
         # treats unsuccessful auth as logged-out user = no username
         return None
     return credentials.username
@@ -82,12 +88,9 @@ async def register_new_user(
 
                 conn.commit()
 
-        return auth.user_state_json_dict(
-            id=created_user_id,
-            credentials_encoded=auth.credentials_b64(
+        return auth.credentials_b64(
                 str(created_user_id), password_hash
-            ),
-        )
+            )
     except:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -120,11 +123,8 @@ async def signin(
         queried_user_id = query_results[0]
 
         if is_auth_successful:
-            return auth.user_state_json_dict(
-                id=queried_user_id,
-                credentials_encoded=auth.credentials_b64(
+            return auth.credentials_b64(
                     str(queried_user_id), password_hash
-                ),
             )
 
         raise auth.UNAUTHORIZED_RESPONSE
@@ -136,11 +136,22 @@ async def signin(
 @router.get("/me", tags=["users"])
 async def user_me_shortcut(
     user_id: Annotated[str, Depends(get_logged_in_user_id)],
+    domain: str = Query(default='USER')
 ):
     if user_id:
-        return RedirectResponse(
-            url=f"/users/{user_id}", status_code=status.HTTP_302_FOUND
-        )
+        match domain:
+            case 'USER':
+                # normal user
+                return RedirectResponse(
+                    url=f"/users/{user_id}", status_code=status.HTTP_302_FOUND
+                )
+            case 'ADMIN':
+                # administrator
+                return RedirectResponse(
+                    url=f"/admin/me", status_code=status.HTTP_302_FOUND
+                )
+            case _:
+                raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
     raise auth.UNAUTHORIZED_RESPONSE
 

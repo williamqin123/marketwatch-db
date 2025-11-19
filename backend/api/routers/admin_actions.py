@@ -221,9 +221,24 @@ async def signin(
 ):
     if auth.verify_admin_authentication(username, password):
         logger.info("admin login successful")
-        return auth.user_state_json_dict(
-            id=-1,
-            credentials_encoded=auth.credentials_b64(username, password),
-        )
+        return auth.credentials_b64(username, password)
 
     raise auth.UNAUTHORIZED_RESPONSE
+
+GENERIC_ADMIN_USER_ID = -1
+
+@router.put("/me", tags=["admin"])
+async def admin_frontend_user_info(
+    credentials: Annotated[HTTPBasicCredentials, Depends(auth.security)],
+    logger: logging.Logger = Depends(get_logger),
+):
+    def _task():
+        return {
+            "user_id": str(GENERIC_ADMIN_USER_ID),
+            "first_name": credentials.username,
+            "last_name": None,
+            "email_address": None,
+            "member_since": 0,
+        }
+
+    return auth.basic_admin_auth_wrapper(credentials, _task)
