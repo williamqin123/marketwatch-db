@@ -14,7 +14,7 @@ LEFT JOIN (
     ON ph1.ticker_symbol = latest.ticker_symbol
     AND ph1.date = latest.max_date
 ) ph ON ph.ticker_symbol = t.ticker_symbol
-WHERE t.ticker_symbol LIKE "$(starts_with)d%"
+WHERE t.ticker_symbol LIKE "%(starts_with)s%%" --search query
 ORDER BY t.ticker_symbol
 LIMIT %(limit)d
 OFFSET %(offset)d;
