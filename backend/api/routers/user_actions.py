@@ -57,37 +57,42 @@ async def register_new_user(
     if not all(CONSTRAINTS):
         return BAD_REQUEST_RESPONSE
 
+    try:
+        with pymysql.connect(**DB_CONNECT_CONFIG) as conn:
+            with conn.cursor() as cursor:
+                with open(
+                    "api/sql/crud_ops/create/create_a_user.sql", "r"
+                ) as f_sql_create_a_user:
+                    logger.info("db connected, got cursor, opened create_a_user.sql")
+                    cursor.execute(
+                        f_sql_create_a_user.read(),
+                        {
+                            "first_name": first_name,
+                            "last_name": last_name,
+                            "email": email,
+                            "password_hash": password_hash,
+                        },
+                    )
+                    logger.info("ran create_a_user.sql")
 
-    with pymysql.connect(**DB_CONNECT_CONFIG) as conn:
-        with conn.cursor() as cursor:
-            with open(
-                "api/sql/crud_ops/create/create_a_user.sql", "r"
-            ) as f_sql_create_a_user:
-                logger.info("db connected, got cursor, opened create_a_user.sql")
-                cursor.execute(
-                    f_sql_create_a_user.read(),
-                    {
-                        "first_name": first_name,
-                        "last_name": last_name,
-                        "email": email,
-                        "password_hash": password_hash,
-                    },
-                )
-                logger.info("ran create_a_user.sql")
+                cursor.execute("SELECT LAST_INSERT_ID() AS created_user_id;")
+                logger.info("ran SELECT LAST_INSERT_ID()")
 
-            cursor.execute("SELECT LAST_INSERT_ID() AS created_user_id;")
-            logger.info("ran SELECT LAST_INSERT_ID()")
+                (created_user_id,) = cursor.fetchone()
 
-            (created_user_id,) = cursor.fetchone()
+                conn.commit()
 
-            conn.commit()
-
-    return auth.user_state_json_dict(
-        id=created_user_id,
-        credentials_encoded=auth.credentials_b64(
-            str(created_user_id), password_hash
-        ),
-    )
+        return auth.user_state_json_dict(
+            id=created_user_id,
+            credentials_encoded=auth.credentials_b64(
+                str(created_user_id), password_hash
+            ),
+        )
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to create user account",
+        )
 
 
 @router.post("/signin", tags=["users"])
