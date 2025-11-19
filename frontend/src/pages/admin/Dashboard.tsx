@@ -26,7 +26,8 @@ function AdminDashboard() {
           new FrontendUser(
             credentials,
             activeUserContext,
-            actionFeedbackToastsContext
+            actionFeedbackToastsContext,
+            true
           )
         );
       },
@@ -38,7 +39,7 @@ function AdminDashboard() {
     );
   }
 
-  if (!activeUserContext.user || !activeUserContext.user.isAdmin()) {
+  if (!activeUserContext.user || !activeUserContext.user.isAdmin) {
     return (
       <div className="max-w-md mx-auto mt-10 p-6">
         <AdminSignIn onLogin={login}></AdminSignIn>

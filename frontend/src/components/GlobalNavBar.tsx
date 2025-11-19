@@ -47,7 +47,7 @@ export default function GlobalNavBar() {
   const links = [
     { to: "/", label: "MarketWatch", bold: true },
     { to: "/tickers", label: "Tickers" },
-    ...(user?.isAdmin() || !user ? [{ to: "/admin", label: "Admin" }] : []),
+    ...(user?.isAdmin || !user ? [{ to: "/admin", label: "Admin" }] : []),
   ];
 
   const shouldShowLogin = !user && !location.pathname.includes("/admin");

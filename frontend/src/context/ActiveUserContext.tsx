@@ -1,6 +1,7 @@
 import { apiCall, PENDING, type MissingValueStatus } from "@/App";
 
 export class FrontendUser {
+  isAdmin: boolean;
   userId: string | MissingValueStatus;
   displayName: string | MissingValueStatus;
   httpCredentials: string;
@@ -8,8 +9,10 @@ export class FrontendUser {
   constructor(
     httpCredentials: string,
     activeUserContext,
-    actionFeedbackToastsContext
+    actionFeedbackToastsContext,
+    admin: boolean = false
   ) {
+    this.isAdmin = admin;
     this.userId = PENDING;
     this.displayName = PENDING;
     this.httpCredentials = httpCredentials;
@@ -21,7 +24,7 @@ export class FrontendUser {
         endpoint: "me",
         method: "GET",
         params: {
-          ...(this.isAdmin() && { domain: "ADMIN" }),
+          ...(this.isAdmin && { domain: "ADMIN" }),
         },
       },
       ({
@@ -37,10 +40,11 @@ export class FrontendUser {
       false
     );
   }
-
+  /*
   isAdmin() {
     return Number(this.userId) === -1 || this.userId === "-1";
   }
+  */
 }
 
 // 1. Create the Context
