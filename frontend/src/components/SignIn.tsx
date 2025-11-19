@@ -29,7 +29,7 @@ const SignIn: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div>
+    <div className="min-w-[400px]">
       <h2 className="mb-5 font-bold">Sign In</h2>
 
       <Form {...form}>
