@@ -13,6 +13,7 @@ interface GlobalModalDialogStateContextType {
   addRemoveTickerFromPortfolios: DialogStateManagerType;
   runIndicator: DialogStateManagerType;
   signOut: DialogStateManagerType;
+  devFeedbackDetails: DialogStateManagerType;
 }
 
 const GlobalModalDialogStateContext = createContext<
@@ -30,6 +31,7 @@ export const GlobalModalDialogsStatesProvider = ({
     addRemoveTickerFromPortfolios: null,
     runIndicator: null,
     signOut: null,
+    devFeedbackDetails: null,
   };
   for (let dialogName of Object.keys(contextVal)) {
     const [dialogState, setDialogState] = useState({
@@ -60,4 +62,20 @@ export const GlobalModalDialogsStatesProvider = ({
 export const useSignInDialog = () => {
   const { signIn } = useContext(GlobalModalDialogStateContext);
   return signIn;
+};
+export const useSignOutDialog = () => {
+  const { signOut } = useContext(GlobalModalDialogStateContext);
+  return signOut;
+};
+
+export const useDevFeedbackDetailsDialog = () => {
+  const { devFeedbackDetails } = useContext(GlobalModalDialogStateContext);
+  return devFeedbackDetails;
+};
+
+export const useAddRemoveTickerFromPortfoliosDialog = () => {
+  const { addRemoveTickerFromPortfolios } = useContext(
+    GlobalModalDialogStateContext
+  );
+  return addRemoveTickerFromPortfolios;
 };

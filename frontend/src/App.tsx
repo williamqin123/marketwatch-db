@@ -20,20 +20,28 @@ import {
   CardHeader,
   CardTitle,
 } from "./components/ui/card";
-import SignIn from "./components/SignIn";
 
-import { useContext } from "react";
-import { useSignInDialog } from "./context/GlobalModalDialogsStatesContext";
+import SignIn from "./components/SignIn";
+import Toast from "./components/Toast";
+
+import { useContext, useState } from "react";
+import {
+  useDevFeedbackDetailsDialog,
+  useSignInDialog,
+} from "./context/GlobalModalDialogsStatesContext";
 import {
   ActionFeedbackToastsContext,
   Feedback,
 } from "./context/ActionFeedbackToastsContext";
 import { UserContext, FrontendUser } from "./context/ActiveUserContext";
+import Modal from "./components/Modal";
 
 function App() {
   const activeUserContext = useContext(UserContext);
   const actionFeedbackToastsContext = useContext(ActionFeedbackToastsContext);
+
   const signInDialog = useSignInDialog();
+  const devFeedbackDetailsDialog = useDevFeedbackDetailsDialog();
 
   async function login(email: string, password: string) {
     apiCall(
@@ -64,6 +72,8 @@ function App() {
     );
   }
 
+  const [expandedFeedbackItem, setExpandedFeedbackItem] = useState<Feedback>();
+
   return (
     <>
       <div>
@@ -85,25 +95,39 @@ function App() {
         if (signInDialog?.dialogState.isOpen) {
           console.log("App.tsx : Dialog Is Open");
           return (
-            <div
-              className="fixed inset-0 z-[100] flex items-center justify-center"
-              style={{ backgroundColor: "#0005" }}
+            <Modal onCloseButtonClick={() => signInDialog.closeDialog()}>
+              <SignIn onLogin={login} />
+            </Modal>
+          );
+        }
+        return undefined;
+      })()}
+
+      <div
+        className="fixed z-[1000]"
+        style={{ width: "300px", bottom: 0, left: 0 }}
+      >
+        {actionFeedbackToastsContext.items.map((feedbackItem: Feedback) => (
+          <Toast
+            message={feedbackItem.message}
+            variant={feedbackItem.variant}
+            onOpenDetails={() => {
+              devFeedbackDetailsDialog.openDialog();
+              setExpandedFeedbackItem(feedbackItem);
+            }}
+          ></Toast>
+        ))}
+      </div>
+
+      {(() => {
+        if (devFeedbackDetailsDialog?.dialogState.isOpen) {
+          console.log("App.tsx : Feedback Dialog Is Open");
+          return (
+            <Modal
+              onCloseButtonClick={() => devFeedbackDetailsDialog.closeDialog()}
             >
-              <Card>
-                <CardHeader>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => signInDialog.closeDialog()}
-                  >
-                    Close
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <SignIn onLogin={login} />
-                </CardContent>
-              </Card>
-            </div>
+              placeholder
+            </Modal>
           );
         }
         return undefined;
@@ -200,27 +224,42 @@ export async function apiCall(
     responseJson = await responseClone.json();
     callback(responseJson);
 
-    if (responseJson.hasOwnProperty("sql")) {
+    if (doShowFeedbackToast) {
+      if (responseJson.hasOwnProperty("sql")) {
+        actionFeedbackToastsContext.push(
+          new Feedback(
+            "SUCCESS",
+            successFeedbackMessage,
+            url,
+            paramsStringified,
+            responseStatusCode,
+            JSON.stringify(
+              Object.fromEntries(
+                Object.entries(responseJson).filter(([k, v]) => k !== "sql")
+              )
+            ),
+            responseJson.sql
+          )
+        );
+      } else {
+        actionFeedbackToastsContext.push(
+          new Feedback(
+            "SUCCESS",
+            successFeedbackMessage,
+            url,
+            paramsStringified,
+            responseStatusCode,
+            responseText
+          )
+        );
+      }
+    }
+  } catch (error) {
+    if (doShowFeedbackToast) {
       actionFeedbackToastsContext.push(
         new Feedback(
-          "SUCCESS",
-          successFeedbackMessage,
-          url,
-          paramsStringified,
-          responseStatusCode,
-          JSON.stringify(
-            Object.fromEntries(
-              Object.entries(responseJson).filter(([k, v]) => k !== "sql")
-            )
-          ),
-          responseJson.sql
-        )
-      );
-    } else {
-      actionFeedbackToastsContext.push(
-        new Feedback(
-          "SUCCESS",
-          successFeedbackMessage,
+          "FAIL",
+          failureFeedbackMessage,
           url,
           paramsStringified,
           responseStatusCode,
@@ -228,17 +267,6 @@ export async function apiCall(
         )
       );
     }
-  } catch (error) {
-    actionFeedbackToastsContext.push(
-      new Feedback(
-        "FAIL",
-        failureFeedbackMessage,
-        url,
-        paramsStringified,
-        responseStatusCode,
-        responseText
-      )
-    );
 
     if (error instanceof AuthError) {
       console.error(`AuthError: ${error.message}`);
