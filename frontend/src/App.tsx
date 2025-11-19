@@ -142,6 +142,10 @@ export async function apiCall(activeUserContext, actionFeedbackToastsContext, {e
       responseStatusCode = response.status;
       responseText = await response.text();
       if (!response.ok) {
+        if (responseStatusCode === 401) {
+          // if current stored user credentials are unauthorized, delete them, so user can sign in again
+          activeUserContext.user.setUser(null);
+        }
         throw new ServerError(responseText);
       }
       responseJson = await response.json();
