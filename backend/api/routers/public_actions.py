@@ -9,9 +9,9 @@ from fastapi import (
     Query,
 )
 from fastapi_pagination import LimitOffsetParams, Params
-import pymysql
+import pymysql, logging
 
-from ..dependencies import DB_CONNECT_CONFIG
+from ..dependencies import DB_CONNECT_CONFIG, BAD_REQUEST_RESPONSE, get_logger
 
 router = APIRouter()
 
@@ -20,10 +20,13 @@ router = APIRouter()
 async def tickers_overview(
     search_query: str | None = Query(None),
     pagination_params: LimitOffsetParams = Depends(),
+    logger: logging.Logger = Depends(get_logger)
 ):
     MAX_PAGE_SIZE = 100
     if search_query is None:
         search_query = ""
+    if pagination_params.limit > MAX_PAGE_SIZE:
+        raise BAD_REQUEST_RESPONSE
     search_query = search_query.strip().lower()
     # returns all tickers if search_query is None, else tickers that contain search_query
     try:
@@ -51,6 +54,7 @@ async def tickers_overview(
                 ]
         return listOfDicts
     except:
+        logger.error("failed to fetch tickers ", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="failed to fetch tickers",
