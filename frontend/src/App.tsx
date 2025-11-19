@@ -104,7 +104,7 @@ function App() {
       })()}
 
       <div
-        className="fixed z-[1000]"
+        className="fixed z-[1000] p-5"
         style={{ width: "50rem", bottom: 0, left: 0 }}
       >
         {actionFeedbackToastsContext.items.map((feedbackItem: Feedback) => (

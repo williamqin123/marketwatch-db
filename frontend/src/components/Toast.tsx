@@ -10,14 +10,18 @@ function Toast({
   onOpenDetails: Function;
 }) {
   return (
-    <div className={`rounded p-4 ${variant == "FAIL" ? "bg-red" : "bg-green"}`}>
+    <div
+      className={`rounded p-4 mt-3 ${
+        variant == "FAIL" ? "bg-red-100" : "bg-green-100"
+      }`}
+    >
       <div className="grid grid-cols-[1fr_auto] gap-5">
-        <span
+        <div
           className="font-medium text-foreground line-clamp-2"
-          style={{ fontSize: "75%" }}
+          style={{ fontSize: "75%", textAlign: "start" }}
         >
           {message}
-        </span>
+        </div>
         <Button type="button" onClick={() => onOpenDetails()}>
           Dev Details
         </Button>

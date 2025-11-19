@@ -10,30 +10,42 @@ function AdminDashboard() {
   const actionFeedbackToastsContext = useContext(ActionFeedbackToastsContext);
 
   async function login(username: string, password: string) {
-    apiCall(activeUserContext, actionFeedbackToastsContext, {
-      endpoint: 'admin/signin',
-      method: 'POST',
-      params: {
-            username,
-            password,
-          },
-    }, (credentials) => {
-        activeUserContext?.setUser(new FrontendUser(credentials, activeUserContext, actionFeedbackToastsContext));
-    }, true, {
-      successFeedbackMessage: "Authenticated as admin.",
-      failureFeedbackMessage: "Failed to sign in as admin.",
-    });
+    apiCall(
+      activeUserContext,
+      actionFeedbackToastsContext,
+      {
+        endpoint: "admin/signin",
+        method: "POST",
+        params: {
+          username,
+          password,
+        },
+      },
+      (credentials) => {
+        activeUserContext?.setUser(
+          new FrontendUser(
+            credentials,
+            activeUserContext,
+            actionFeedbackToastsContext
+          )
+        );
+      },
+      true,
+      {
+        successFeedbackMessage: "Authenticated as admin.",
+        failureFeedbackMessage: "Failed to sign in as admin.",
+      }
+    );
   }
 
-  if (!activeUserContext.user) {
+  if (!activeUserContext.user || !activeUserContext.user.isAdmin()) {
     return (
       <div className="max-w-md mx-auto mt-10 p-6">
         <AdminSignIn onLogin={login}></AdminSignIn>
       </div>
     );
-  }
-  else {
-    return
+  } else {
+    return;
   }
 }
 

@@ -31,16 +31,15 @@ function NavItem({
 }
 
 export default function GlobalNavBar() {
+  const { user } = useContext(UserContext) || {};
   const location = useLocation();
-  const currentUser = useContext(UserContext);
   const signInDialog = useSignInDialog();
 
-  const user = currentUser?.user;
-
-  const baseLinks = [
+  // --- Build links based on user role ---
+  const links = [
     { to: "/", label: "MarketWatch", bold: true },
     { to: "/tickers", label: "Tickers" },
-    { to: "/admin", label: "Admin" },
+    ...(user?.isAdmin() || !user ? [{ to: "/admin", label: "Admin" }] : []),
   ];
 
   const shouldShowLogin = !user && !location.pathname.includes("/admin");
@@ -49,8 +48,8 @@ export default function GlobalNavBar() {
     <>
       <NavigationMenu>
         <NavigationMenuList>
-          {/* Core navigation links */}
-          {baseLinks.map(({ to, label, bold }) => (
+          {/* Main links */}
+          {links.map(({ to, label, bold }) => (
             <NavItem
               key={to}
               to={to}
@@ -62,31 +61,34 @@ export default function GlobalNavBar() {
             </NavItem>
           ))}
 
-          {/* User-specific items */}
-          {user
-            ? !user.isAdmin() && <NavItem to="/me">My Account</NavItem>
-            : shouldShowLogin && (
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <button
-                      type="button"
-                      className={navigationMenuTriggerStyle({
-                        className: "!text-foreground",
-                      })}
-                      onClick={() => signInDialog?.openDialog()}
-                    >
-                      Log In
-                    </button>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              )}
+          {/* User-specific actions */}
+          {user ? (
+            <NavItem to="/me">My Account</NavItem>
+          ) : (
+            shouldShowLogin && (
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <button
+                    type="button"
+                    className={navigationMenuTriggerStyle({
+                      className: "!text-foreground",
+                    })}
+                    onClick={() => signInDialog?.openDialog()}
+                  >
+                    Log In
+                  </button>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            )
+          )}
         </NavigationMenuList>
       </NavigationMenu>
 
+      {/* Signed-in identity display */}
       {user && (
         <div className="float-right rounded grid grid-rows-2 cursor-pointer">
           <span>Signed in as:</span>
-          <em>{user?.displayName}</em>
+          <em>{user.displayName}</em>
         </div>
       )}
 
