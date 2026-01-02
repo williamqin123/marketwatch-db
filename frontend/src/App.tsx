@@ -207,7 +207,9 @@ export async function apiCall(
     failureFeedbackMessage,
   }: { successFeedbackMessage?: string; failureFeedbackMessage?: string } = {}
 ) {
-  const API_ORIGIN = "https://specific-brande-data-group-585a3e34.koyeb.app";
+  const API_ORIGIN = window.location.hostname.startsWith("localhost")
+    ? "http://localhost:8000"
+    : "https://specific-brande-data-group-585a3e34.koyeb.app";
 
   let url = `${API_ORIGIN}/${endpoint}`;
   const headers = {};
