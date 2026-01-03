@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useContext } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -29,6 +29,15 @@ const CreateAccount: React.FC = () => {
   const navigate = useNavigate();
   const activeUserContext = useContext(UserContext);
   const actionFeedbackToastsContext = useContext(ActionFeedbackToastsContext);
+
+  useEffect(() => {
+    // This code runs every time the active user context changes
+    console.log("Active user context changed:", activeUserContext.user);
+
+    if (activeUserContext.user) {
+      navigate("/me"); // Redirect to the "My Account" page if user is logged in
+    }
+  }, [activeUserContext]);
 
   const form = useForm<CreateAccountFormValues>({
     defaultValues: {
