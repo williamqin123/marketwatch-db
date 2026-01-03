@@ -1,6 +1,6 @@
 import "./App.css"; // Import the CSS file
 
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import CreateAccount from "./pages/CreateAccount";
 import MyAccount from "./pages/MyAccount";
@@ -25,7 +25,7 @@ import {
 import SignIn from "./components/SignIn";
 import Toast from "./components/Toast";
 
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import {
   useDevFeedbackDetailsDialog,
   useSignInDialog,
@@ -45,6 +45,19 @@ function App() {
   const signInDialog = useSignInDialog();
   const signOutDialog = useSignOutDialog();
   const devFeedbackDetailsDialog = useDevFeedbackDetailsDialog();
+
+  const location = useLocation();
+  useEffect(() => {
+    // This code runs every time the location (route) changes
+    console.log("Route changed:", location.pathname);
+
+    // Example: Scroll to the top of the page on route change
+    window.scrollTo(0, 0);
+
+    signInDialog.closeDialog();
+    signOutDialog.closeDialog();
+    devFeedbackDetailsDialog.closeDialog();
+  }, [location]);
 
   async function login(email: string, password: string) {
     apiCall(
