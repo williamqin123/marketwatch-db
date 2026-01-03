@@ -11,7 +11,7 @@ from ..internal.setup_db import setup_db, db_fill_starter_data
 from ..internal import auth
 from ..dependencies import DB_CONNECT_CONFIG, get_logger
 
-import json, pymysql, datetime, decimal, io, logging
+import json, pymysql, datetime, decimal, io, logging, os
 
 from collections import defaultdict
 
@@ -222,6 +222,8 @@ async def signin(
     if auth.verify_admin_authentication(username, password):
         logger.info("admin login successful")
         return auth.credentials_b64(username, password)
+
+    logger.warning("failed to auth admin of DB host " + DB_CONNECT_CONFIG["host"])
 
     raise auth.UNAUTHORIZED_RESPONSE
 

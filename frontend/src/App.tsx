@@ -258,7 +258,7 @@ export async function apiCall(
     if (!response.ok) {
       if (responseStatusCode === 401) {
         // if current stored user credentials are unauthorized, delete them, so user can sign in again
-        activeUserContext.user.setUser(null);
+        activeUserContext.setUser(null);
       }
       throw new ServerError(responseText);
     }
