@@ -37,6 +37,7 @@ import {
 } from "./context/ActionFeedbackToastsContext";
 import { UserContext, FrontendUser } from "./context/ActiveUserContext";
 import Modal from "./components/Modal";
+import { useEffectSingleDependencyOnlyOnChanges } from "./hooks";
 
 function App() {
   const activeUserContext = useContext(UserContext);
@@ -47,7 +48,7 @@ function App() {
   const devFeedbackDetailsDialog = useDevFeedbackDetailsDialog();
 
   const location = useLocation();
-  useEffect(() => {
+  useEffectSingleDependencyOnlyOnChanges(() => {
     // This code runs every time the location (route) changes
     console.log("Route changed:", location.pathname);
 
@@ -57,7 +58,7 @@ function App() {
     signInDialog.closeDialog();
     signOutDialog.closeDialog();
     devFeedbackDetailsDialog.closeDialog();
-  }, [location]);
+  }, location.pathname);
 
   async function login(email: string, password: string) {
     apiCall(
